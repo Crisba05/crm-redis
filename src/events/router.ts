@@ -10,7 +10,7 @@ const routeMap: Record<string, string> = {
   [EventNames.LeadCreated]: QUEUE_NAMES.notification,
   [EventNames.ContactCreated]: QUEUE_NAMES.notification,
   [EventNames.DealStageChanged]: QUEUE_NAMES.notification,
-  [EventNames.QuoteSent]: QUEUE_NAMES.email,
+  [EventNames.QuoteSent]: QUEUE_NAMES.notification,
   [EventNames.TaskDue]: QUEUE_NAMES.notification,
   [EventNames.TaskUpdated]: QUEUE_NAMES.notification,
   [EventNames.ActivityCreated]: QUEUE_NAMES.notification,
