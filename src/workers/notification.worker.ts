@@ -19,6 +19,12 @@ export const startNotificationWorker = () => {
         tenantId: event?.tenantId,
         event: job.name,
         channel,
+        targetUserId:
+          typeof event?.data?.userId === "string"
+            ? String(event.data.userId)
+            : typeof event?.actorId === "string"
+              ? String(event.actorId)
+              : undefined,
         data: event,
         occurredAt: event?.occurredAt ?? new Date().toISOString()
       };
