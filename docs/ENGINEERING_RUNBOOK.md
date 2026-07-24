@@ -9,6 +9,7 @@
 4. **[Known Bugs & Risks](./KNOWN_BUGS.md)** - Missing healthchecks and email quota risks.
 5. **[Server Operations](./SERVER_OPERATIONS.md)** - Zombie queue clearing.
 6. **[Mascotas Vertical Alignment (2026-04-14)](./VERTICAL_MASCOTAS_ALIGNMENT_2026-04-14.md)** - Queue/runtime implications for new active modules in Mascotas.
+7. **Notification target routing (2026-07-23)** - Worker includes a best-effort `targetUserId` in notification payloads.
 
 ## Project Goal
 This directory provides a foundational codebase state so AI agents (specifically Backend/DevOps agents) have enough context to implement robust queue failure retries and add new asynchronous jobs without disrupting the main monolith backend.
@@ -51,5 +52,13 @@ No direct worker code changes were required for this alignment. Existing workers
 - Keep SMTP/API/WhatsApp credentials in secure env storage only.
 - Never log full credential payloads in worker traces.
 - Rotate compromised keys immediately and revalidate failing queues.
+
+## Notification Target Routing (2026-07-23)
+
+Context: notification jobs can carry the intended recipient either in `event.data.userId` or in `event.actorId`, depending on the producer.
+
+Decision: `notification.worker.ts` now maps the first string value found from those fields into `targetUserId` before dispatching the notification payload.
+
+Validation: whitespace check passed before commit; no secrets or credentials are introduced by the payload mapping.
 
 
