@@ -8,7 +8,13 @@ export const startNotificationWorker = () => {
   const worker = new Worker(
     QUEUE_NAMES.notification,
     async (job) => {
-      const event = job.data as { tenantId?: string; name?: string; data?: Record<string, unknown>; occurredAt?: string };
+      const event = job.data as {
+        tenantId?: string;
+        name?: string;
+        actorId?: string;
+        data?: Record<string, unknown>;
+        occurredAt?: string;
+      };
       if (env.LOG_LEVEL === "debug") {
         console.log("notification job", job.id, job.data);
       }
