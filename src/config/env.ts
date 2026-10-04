@@ -11,8 +11,10 @@ const EnvSchema = z.object({
   QUEUE_PREFIX: z.string().min(1).default("crm"),
   REALTIME_CHANNEL: z.string().min(1).default("crm-realtime"),
   WHATSAPP_API_VERSION: z.string().min(1).default("v19.0"),
+  RESEND_API_KEY: z.string().optional().default(""),
+  EMAIL_FROM: z.string().optional().default(""),
   WORKER: z.string().default("all"),
-  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info")
+  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 });
 
 const env = EnvSchema.parse({
@@ -23,8 +25,10 @@ const env = EnvSchema.parse({
   QUEUE_PREFIX: process.env.QUEUE_PREFIX ?? "crm",
   REALTIME_CHANNEL: process.env.REALTIME_CHANNEL ?? "crm-realtime",
   WHATSAPP_API_VERSION: process.env.WHATSAPP_API_VERSION ?? "v19.0",
+  RESEND_API_KEY: process.env.RESEND_API_KEY ?? "",
+  EMAIL_FROM: process.env.EMAIL_FROM ?? "",
   WORKER: process.env.WORKER ?? "all",
-  LOG_LEVEL: process.env.LOG_LEVEL ?? "info"
+  LOG_LEVEL: process.env.LOG_LEVEL ?? "info",
 });
 
 export { env };
