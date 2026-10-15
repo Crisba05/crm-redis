@@ -36,6 +36,34 @@ const readAttachments = (value: unknown) => {
   return attachments;
 };
 
+const EMAIL_PATTERN = /^[^\s@<>",;]+@[^\s@<>",;]+\.[^\s@<>",;]+$/;
+
+/** Direccion de un remitente `Nombre <correo>` o `correo`. */
+const addressOf = (from: string) => {
+  const match = from.match(/<([^<>]+)>\s*$/);
+  return (match ? match[1] : from).trim();
+};
+
+/**
+ * Remitente final: si el job trae `fromName`, se usa como nombre visible pero
+ * la direccion sigue siendo la configurada (nunca la del job), para no
+ * suplantar dominios. Se quitan comillas y saltos de linea del nombre.
+ */
+const buildFrom = (configuredFrom: string, fromName: unknown) => {
+  const name =
+    typeof fromName === "string"
+      ? fromName.replace(/[\r\n"<>\\]/g, " ").replace(/\s+/g, " ").trim().slice(0, 100)
+      : "";
+  if (!name) return configuredFrom;
+  return `"${name}" <${addressOf(configuredFrom)}>`;
+};
+
+/** `replyTo` solo si es un correo valido; si no, se ignora. */
+const readReplyTo = (value: unknown) =>
+  typeof value === "string" && EMAIL_PATTERN.test(value.trim())
+    ? value.trim()
+    : undefined;
+
 /** Copia del job sin el base64 de los adjuntos (para logs y realtime). */
 const withoutAttachmentContent = (data: unknown) => {
   const payload = data as { data?: { attachments?: EmailAttachment[] } };
@@ -70,9 +98,13 @@ export const startEmailWorker = () => {
           provider?: string;
           credentials?: Record<string, unknown>;
           attachments?: EmailAttachment[];
+          fromName?: string;
+          replyTo?: string;
         };
       };
       const attachments = readAttachments(jobPayload?.data?.attachments);
+      const fromName = jobPayload?.data?.fromName;
+      const replyTo = readReplyTo(jobPayload?.data?.replyTo);
       const provider = jobPayload?.data?.provider;
       const credentials = jobPayload?.data?.credentials as
         Record<string, unknown> | undefined;
@@ -100,7 +132,8 @@ export const startEmailWorker = () => {
         });
 
         await transporter.sendMail({
-          from,
+          from: buildFrom(from, fromName),
+          ...(replyTo && { replyTo }),
           to: jobPayload?.data?.to,
           subject: jobPayload?.data?.subject,
           html: jobPayload?.data?.html,
@@ -119,8 +152,9 @@ export const startEmailWorker = () => {
             ? { apiKey: env.RESEND_API_KEY, from: env.EMAIL_FROM }
             : (credentials ?? {});
         const apiKey = String(platformCredentials.apiKey ?? "");
-        const from = String(
-          platformCredentials.from ?? "CRM <onboarding@resend.dev>",
+        const from = buildFrom(
+          String(platformCredentials.from ?? "CRM <onboarding@resend.dev>"),
+          fromName,
         );
         if (!apiKey) {
           throw new Error("email worker: apiKey requerido");
@@ -133,6 +167,7 @@ export const startEmailWorker = () => {
           },
           body: JSON.stringify({
             from,
+            ...(replyTo && { reply_to: replyTo }),
             to: jobPayload?.data?.to,
             subject: jobPayload?.data?.subject,
             html: jobPayload?.data?.html,
